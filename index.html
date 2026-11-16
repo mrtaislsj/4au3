@@ -118,7 +118,7 @@
       gap: 5px;
     }
 
-    .hud-pill.practice-badge {
+    .hud-pill.gameover-badge {
       background: rgba(127, 29, 29, 0.92);
       border-color: #f87171;
       color: #fecaca;
@@ -544,29 +544,13 @@
       font-family: inherit;
       font-weight: 900;
       font-size: 0.82rem;
-      padding: 9px 20px;
+      padding: 9px 22px;
       border-radius: 24px;
       cursor: pointer;
       box-shadow: 0 4px 12px rgba(245, 158, 11, 0.45);
     }
 
     .next-btn:active {
-      transform: scale(0.96);
-    }
-
-    .practice-continue-btn {
-      background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
-      border: 2px solid #60a5fa;
-      color: #e0f2fe;
-      font-family: inherit;
-      font-weight: 800;
-      font-size: 0.8rem;
-      padding: 9px 18px;
-      border-radius: 24px;
-      cursor: pointer;
-    }
-
-    .practice-continue-btn:active {
       transform: scale(0.96);
     }
 
@@ -1050,7 +1034,7 @@
       <div style="font-size: 2.8rem; margin-bottom: 4px;">💎</div>
       <div class="modal-title" style="font-size: 1.3rem;">WHO WANTS TO BE A MILLIONAIRE?</div>
       <p style="font-size: 0.85rem; color: #bae6fd; line-height: 1.45; margin-bottom: 14px;">
-        Answer <strong>20 English Grammar & Vocabulary</strong> questions to win <strong>£1,000,000</strong>!
+        Answer <strong>20 English Grammar & Vocabulary</strong> questions to win <strong>£1,000,000</strong>! One wrong answer ends the game.
       </p>
 
       <div class="lifeline-guide-list">
@@ -1085,7 +1069,7 @@
         </div>
       </div>
       <div class="caller-speech" id="mrTaiSpeech">Connecting to Mr Tai...</div>
-      <button class="modal-close-btn" id="closePhoneBtn" style="display:none;" onclick="closeModal('phoneModal')">THANK YOU! ✔</button>
+      <button class="modal-close-btn" id="closePhoneBtn" style="display:none;" onclick="closePhoneModal()">THANK YOU! ✔</button>
     </div>
   </div>
 
@@ -1118,18 +1102,18 @@
         </div>
       </div>
 
-      <button class="modal-close-btn" onclick="closeModal('audienceModal')">BACK TO QUESTION ✔</button>
+      <button class="modal-close-btn" onclick="closeAudienceModal()">BACK TO QUESTION ✔</button>
     </div>
   </div>
 
-  <!-- FINAL SUMMARY / VICTORY MODAL -->
+  <!-- FINAL VICTORY MODAL -->
   <div class="modal-backdrop" id="endModal">
     <div class="studio-modal">
-      <div style="font-size: 3.2rem; margin-bottom: 6px;" id="endEmoji">🏆</div>
-      <div class="modal-title" style="font-size: 1.35rem;" id="endTitle">CONGRATULATIONS!</div>
-      <div style="font-size: 1.65rem; font-weight: 900; color: #4ade80; margin: 10px 0;" id="endWinnings">£1,000,000</div>
-      <p style="font-size: 0.88rem; color: #e0f2fe; line-height: 1.5; margin-bottom: 18px;" id="endSummary">
-        You answered all 20 questions!
+      <div style="font-size: 3.2rem; margin-bottom: 6px;">👑</div>
+      <div class="modal-title" style="font-size: 1.35rem;">YOU ARE A MILLIONAIRE!</div>
+      <div style="font-size: 1.75rem; font-weight: 900; color: #4ade80; margin: 10px 0;">£1,000,000</div>
+      <p style="font-size: 0.88rem; color: #e0f2fe; line-height: 1.5; margin-bottom: 18px;">
+        Flawless 20 / 20! You conquered every phrase of quantity and adjective comparison to win a million pounds!
       </p>
       <button class="next-btn" style="width: 100%; font-size: 0.95rem; padding: 13px;" onclick="restartGame()">PLAY AGAIN FROM START 🔄</button>
     </div>
@@ -1299,14 +1283,17 @@
     ];
 
     /* =========================================================
-       AUDIO SYSTEM (MP3 TRACKS + WEBAUDIO SYNTH FALLBACK)
+       AUDIO SYSTEM (MP3 TRACKS + BGM RESUME AFTER LIFELINES)
        ========================================================= */
     const mp3Tracks = {
       intro: new Audio("intro.mp3"),
       bgm: new Audio("bgm.mp3"),
       win: new Audio("win.mp3"),
       lose: new Audio("lose.mp3"),
-      finalWin: new Audio("final win.mp3")
+      finalWin: new Audio("final win.mp3"),
+      fifty: new Audio("50.mp3"),
+      phone: new Audio("phone.mp3"),
+      ask: new Audio("ask.mp3")
     };
 
     mp3Tracks.intro.loop = true;
@@ -1316,10 +1303,14 @@
     mp3Tracks.win.volume = 0.8;
     mp3Tracks.lose.volume = 0.8;
     mp3Tracks.finalWin.volume = 0.9;
+    mp3Tracks.fifty.volume = 0.85;
+    mp3Tracks.phone.volume = 0.85;
+    mp3Tracks.ask.volume = 0.85;
 
     let audioCtx = null;
     let isMuted = false;
     let introStarted = false;
+    let activeLifelineTrack = null;
 
     function initAudioCtx() {
       if (!audioCtx) {
@@ -1331,12 +1322,73 @@
     }
 
     function stopAllTracks() {
+      activeLifelineTrack = null;
       Object.values(mp3Tracks).forEach(track => {
         try {
+          track.onended = null;
           track.pause();
           track.currentTime = 0;
         } catch (e) {}
       });
+    }
+
+    function resumeBGM() {
+      if (isMuted || answerConfirmed || isGameOver) return;
+      if (document.getElementById("startModal").classList.contains("active")) return;
+      if (activeLifelineTrack && !activeLifelineTrack.paused) return;
+
+      mp3Tracks.bgm.loop = true;
+      mp3Tracks.bgm.play().catch(() => {});
+    }
+
+    function playLifelineAudio(trackKey) {
+      initAudioCtx();
+      if (isMuted) return;
+
+      // Pause background music while the lifeline sound plays
+      try {
+        mp3Tracks.bgm.pause();
+      } catch (e) {}
+
+      // Stop any previously playing lifeline sound
+      if (activeLifelineTrack) {
+        try {
+          activeLifelineTrack.onended = null;
+          activeLifelineTrack.pause();
+          activeLifelineTrack.currentTime = 0;
+        } catch (e) {}
+      }
+
+      const track = mp3Tracks[trackKey];
+      if (!track) return;
+
+      activeLifelineTrack = track;
+      track.currentTime = 0;
+      track.onended = () => {
+        activeLifelineTrack = null;
+        resumeBGM();
+      };
+
+      const playPromise = track.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          activeLifelineTrack = null;
+          playLifelineChime();
+          setTimeout(resumeBGM, 500);
+        });
+      }
+    }
+
+    function stopLifelineAudioAndResumeBGM() {
+      if (activeLifelineTrack) {
+        try {
+          activeLifelineTrack.onended = null;
+          activeLifelineTrack.pause();
+          activeLifelineTrack.currentTime = 0;
+        } catch (e) {}
+        activeLifelineTrack = null;
+      }
+      resumeBGM();
     }
 
     function playMp3Track(trackKey, fallbackSynthFn) {
@@ -1362,7 +1414,6 @@
       }
     }
 
-    // Attempt autoplay on page load (works if browser allows; otherwise triggers on first touch)
     window.addEventListener("DOMContentLoaded", () => {
       ensureIntroPlays();
     });
@@ -1374,8 +1425,10 @@
       if (!isMuted) {
         if (document.getElementById("startModal").classList.contains("active")) {
           ensureIntroPlays();
-        } else if (!answerConfirmed) {
-          mp3Tracks.bgm.play().catch(() => {});
+        } else if (activeLifelineTrack && !activeLifelineTrack.paused) {
+          activeLifelineTrack.play().catch(() => {});
+        } else if (!answerConfirmed && !isGameOver) {
+          resumeBGM();
         }
       }
     }
@@ -1464,7 +1517,6 @@
         "#ef4444", "#a855f7", "#ffffff", "#fb7185"
       ];
 
-      // Spawn 360 high-density confetti pieces across the top and sides
       for (let i = 0; i < 360; i++) {
         confettiParticles.push({
           x: Math.random() * confettiCanvas.width,
@@ -1524,19 +1576,17 @@
     }
 
     /* =========================================================
-       GAME STATE & PROGRESSION LOGIC
+       GAME STATE & SUDDEN-DEATH PROGRESSION LOGIC
        ========================================================= */
     let currentQ = 0;
-    let correctCount = 0;
     let selectedAnswerIndex = null;
     let answerConfirmed = false;
     let eliminatedIndices = new Set();
     let lifelinesUsed = { fifty: false, phone: false, audience: false };
 
-    // Elimination / Practice Mode state
-    let isGameOverEliminated = false; // True once the player chooses a wrong answer
-    let frozenLadderIndex = -1;       // The exact rung where progress stopped
-    let bankedPrize = "£0";           // What they won before getting eliminated
+    let isGameOver = false;
+    let failedLadderIndex = -1;
+    let bankedPrize = "£0";
 
     function buildMoneyLadder() {
       const ladderEl = document.getElementById("moneyLadder");
@@ -1556,17 +1606,16 @@
       const ladderEl = document.getElementById("moneyLadder");
       const hudPill = document.getElementById("hudPrizePill");
 
-      if (isGameOverEliminated) {
-        // Progress column stops! Keep ladder frozen at frozenLadderIndex
+      if (isGameOver) {
         ladderEl.classList.add("frozen");
         for (let i = 0; i < prizeLadder.length; i++) {
           const row = document.getElementById(`ladder-${i}`);
           row.classList.remove("active", "passed", "frozen-stop");
-          if (i < frozenLadderIndex) row.classList.add("passed");
-          if (i === frozenLadderIndex) row.classList.add("frozen-stop");
+          if (i < failedLadderIndex) row.classList.add("passed");
+          if (i === failedLadderIndex) row.classList.add("frozen-stop");
         }
-        hudPill.classList.add("practice-badge");
-        hudPill.textContent = `Q${currentQ + 1} / 20 • NO PRIZE (BANKED: ${bankedPrize})`;
+        hudPill.classList.add("gameover-badge");
+        hudPill.textContent = `GAME OVER • WON: ${bankedPrize}`;
       } else {
         ladderEl.classList.remove("frozen");
         for (let i = 0; i < prizeLadder.length; i++) {
@@ -1575,7 +1624,7 @@
           if (i < currentQ) row.classList.add("passed");
           if (i === currentQ) row.classList.add("active");
         }
-        hudPill.classList.remove("practice-badge");
+        hudPill.classList.remove("gameover-badge");
         hudPill.textContent = `Q${currentQ + 1} / 20 • ${prizeLadder[currentQ]}`;
       }
     }
@@ -1596,7 +1645,6 @@
       answerConfirmed = false;
       eliminatedIndices.clear();
 
-      // Stop intro/win/lose and loop bgm.mp3 during questions
       stopAllTracks();
       playMp3Track("bgm", null);
 
@@ -1619,7 +1667,7 @@
     }
 
     function selectAnswer(chosenIndex) {
-      if (answerConfirmed || eliminatedIndices.has(chosenIndex)) return;
+      if (answerConfirmed || isGameOver || eliminatedIndices.has(chosenIndex)) return;
 
       selectedAnswerIndex = chosenIndex;
       playSelectSound();
@@ -1639,7 +1687,7 @@
     }
 
     function confirmFinalAnswer() {
-      if (selectedAnswerIndex === null || answerConfirmed) return;
+      if (selectedAnswerIndex === null || answerConfirmed || isGameOver) return;
       answerConfirmed = true;
 
       document.getElementById("finalAnswerBar").classList.remove("active");
@@ -1667,40 +1715,28 @@
         actionsEl.innerHTML = "";
 
         if (chosenIndex === q.correct) {
-          // --- CORRECT ANSWER ---
           chosenWrap.classList.add("correct");
-          correctCount++;
           const isFinalQ = (currentQ === quizQuestions.length - 1);
 
-          if (!isGameOverEliminated) {
-            bankedPrize = prizeLadder[currentQ];
-            playWinAudio(isFinalQ);
+          bankedPrize = prizeLadder[currentQ];
+          playWinAudio(isFinalQ);
 
-            statusEl.style.color = "#4ade80";
-            statusEl.textContent = isFinalQ ? "👑 MILLIONAIRE! FINAL ANSWER CORRECT!" : "✓ CORRECT! FINAL ANSWER!";
-            prizeEl.style.color = "var(--gold-light)";
-            prizeEl.textContent = `WON: ${bankedPrize}`;
+          statusEl.style.color = "#4ade80";
+          statusEl.textContent = isFinalQ ? "👑 MILLIONAIRE! FINAL ANSWER CORRECT!" : "✓ CORRECT! FINAL ANSWER!";
+          prizeEl.style.color = "var(--gold-light)";
+          prizeEl.textContent = `WON: ${bankedPrize}`;
 
-            if (isFinalQ) {
-              launchMassiveConfetti();
-            }
-          } else {
-            // Already eliminated earlier: plays win.mp3, but wins NO money and ladder does not progress
-            playWinAudio(false);
-            statusEl.style.color = "#4ade80";
-            statusEl.textContent = "✓ CORRECT! (PRACTICE MODE)";
-            prizeEl.style.color = "#fca5a5";
-            prizeEl.textContent = `NO MONEY WON (BANKED: ${bankedPrize})`;
+          if (isFinalQ) {
+            launchMassiveConfetti();
           }
 
           const nextBtn = document.createElement("button");
           nextBtn.className = "next-btn";
-          nextBtn.textContent = isFinalQ ? "SEE FINAL RESULTS 🏆" : "NEXT QUESTION ➜";
+          nextBtn.textContent = isFinalQ ? "CLAIM £1,000,000 TROPHY 🏆" : "NEXT QUESTION ➜";
           nextBtn.onclick = nextQuestion;
           actionsEl.appendChild(nextBtn);
 
         } else {
-          // --- WRONG ANSWER ---
           chosenWrap.classList.add("wrong");
           document.getElementById(`wrap-${q.correct}`).classList.add("correct");
           playLoseAudio();
@@ -1708,51 +1744,20 @@
           const correctLetter = ["A", "B", "C", "D"][q.correct];
           feedbackPanel.classList.add("loss-border");
 
-          if (!isGameOverEliminated) {
-            // First time getting a question wrong -> Game ends & they take what they won!
-            isGameOverEliminated = true;
-            frozenLadderIndex = currentQ;
-            updateLadderHighlight();
+          isGameOver = true;
+          failedLadderIndex = currentQ;
+          updateLadderHighlight();
 
-            statusEl.style.color = "#f87171";
-            statusEl.textContent = `✕ GAME OVER — Correct Answer: ${correctLetter}`;
-            prizeEl.style.color = "#fde047";
-            prizeEl.textContent = `YOU TAKE HOME: ${bankedPrize}`;
+          statusEl.style.color = "#f87171";
+          statusEl.textContent = `✕ GAME OVER — Correct Answer: ${correctLetter}`;
+          prizeEl.style.color = "#fde047";
+          prizeEl.textContent = `YOU WIN: ${bankedPrize}`;
 
-            // Option 1: Try Again from the Start
-            const restartBtn = document.createElement("button");
-            restartBtn.className = "next-btn";
-            restartBtn.textContent = "TRY AGAIN FROM START 🔄";
-            restartBtn.onclick = restartGame;
-            actionsEl.appendChild(restartBtn);
-
-            // Option 2: Keep Playing Anyway (No Money, Ladder Frozen)
-            if (currentQ < quizQuestions.length - 1) {
-              const keepPlayingBtn = document.createElement("button");
-              keepPlayingBtn.className = "practice-continue-btn";
-              keepPlayingBtn.textContent = "KEEP PLAYING (NO MONEY) ➜";
-              keepPlayingBtn.onclick = nextQuestion;
-              actionsEl.appendChild(keepPlayingBtn);
-            }
-          } else {
-            // Already in Practice Mode after losing earlier
-            statusEl.style.color = "#f87171";
-            statusEl.textContent = `✕ INCORRECT — Correct Answer: ${correctLetter}`;
-            prizeEl.style.color = "#fca5a5";
-            prizeEl.textContent = `NO MONEY WON (BANKED: ${bankedPrize})`;
-
-            const restartBtn = document.createElement("button");
-            restartBtn.className = "practice-continue-btn";
-            restartBtn.textContent = "TRY AGAIN FROM START 🔄";
-            restartBtn.onclick = restartGame;
-            actionsEl.appendChild(restartBtn);
-
-            const nextBtn = document.createElement("button");
-            nextBtn.className = "next-btn";
-            nextBtn.textContent = currentQ === quizQuestions.length - 1 ? "SEE SUMMARY 📋" : "NEXT QUESTION ➜";
-            nextBtn.onclick = nextQuestion;
-            actionsEl.appendChild(nextBtn);
-          }
+          const restartBtn = document.createElement("button");
+          restartBtn.className = "next-btn";
+          restartBtn.textContent = "TRY AGAIN FROM START 🔄";
+          restartBtn.onclick = restartGame;
+          actionsEl.appendChild(restartBtn);
         }
 
         feedbackPanel.classList.add("active");
@@ -1760,46 +1765,28 @@
     }
 
     function nextQuestion() {
+      if (isGameOver) return;
       currentQ++;
       if (currentQ < quizQuestions.length) {
         loadQuestion();
       } else {
-        showEndScreen();
+        showVictoryScreen();
       }
     }
 
-    function showEndScreen() {
+    function showVictoryScreen() {
       stopAllTracks();
-      const endModal = document.getElementById("endModal");
-      const endEmoji = document.getElementById("endEmoji");
-      const endTitle = document.getElementById("endTitle");
-      const endWinnings = document.getElementById("endWinnings");
-      const endSummary = document.getElementById("endSummary");
-
-      if (!isGameOverEliminated && correctCount === 20) {
-        endEmoji.textContent = "👑";
-        endTitle.textContent = "YOU ARE A MILLIONAIRE!";
-        endWinnings.textContent = "£1,000,000";
-        endSummary.textContent = "Flawless 20 / 20! You conquered every phrase of quantity and adjective comparison to win a million pounds!";
-        playMp3Track("finalWin", null);
-        launchMassiveConfetti();
-      } else {
-        endEmoji.textContent = "🏆";
-        endTitle.textContent = "GAME COMPLETE!";
-        endWinnings.textContent = `Prize Won: ${bankedPrize}`;
-        endSummary.textContent = `You answered ${correctCount} / 20 questions correctly. Your money ladder stopped at ${bankedPrize}. Try again from the start to reach £1,000,000!`;
-      }
-
-      endModal.classList.add("active");
+      playMp3Track("finalWin", null);
+      launchMassiveConfetti();
+      document.getElementById("endModal").classList.add("active");
     }
 
     function restartGame() {
       stopConfetti();
       stopAllTracks();
       currentQ = 0;
-      correctCount = 0;
-      isGameOverEliminated = false;
-      frozenLadderIndex = -1;
+      isGameOver = false;
+      failedLadderIndex = -1;
       bankedPrize = "£0";
       lifelinesUsed = { fifty: false, phone: false, audience: false };
       document.getElementById("ll-5050").classList.remove("used");
@@ -1811,13 +1798,13 @@
     }
 
     /* =========================================================
-       LIFELINE 1: 50:50
+       LIFELINE 1: 50:50 ("50.mp3" -> RESUMES "bgm.mp3")
        ========================================================= */
     function useFiftyFifty() {
-      if (lifelinesUsed.fifty || answerConfirmed) return;
+      if (lifelinesUsed.fifty || answerConfirmed || isGameOver) return;
       lifelinesUsed.fifty = true;
       document.getElementById("ll-5050").classList.add("used");
-      playLifelineChime();
+      playLifelineAudio("fifty");
 
       const q = quizQuestions[currentQ];
       const wrongIndices = [0, 1, 2, 3].filter(idx => idx !== q.correct);
@@ -1839,13 +1826,13 @@
     }
 
     /* =========================================================
-       LIFELINE 2: PHONE A FRIEND (CALLING MR TAI)
+       LIFELINE 2: PHONE A FRIEND ("phone.mp3" -> RESUMES "bgm.mp3")
        ========================================================= */
     function usePhoneFriend() {
-      if (lifelinesUsed.phone || answerConfirmed) return;
+      if (lifelinesUsed.phone || answerConfirmed || isGameOver) return;
       lifelinesUsed.phone = true;
       document.getElementById("ll-phone").classList.add("used");
-      playLifelineChime();
+      playLifelineAudio("phone");
 
       const q = quizQuestions[currentQ];
       const letters = ["A", "B", "C", "D"];
@@ -1865,9 +1852,6 @@
       avatar.classList.add("ringing-pulse");
       phoneModal.classList.add("active");
 
-      playNote(523.25, 'sine', 0.25, 0.1, 0.1);
-      playNote(659.25, 'sine', 0.25, 0.35, 0.1);
-
       setTimeout(() => {
         avatar.classList.remove("ringing-pulse");
         statusText.textContent = "Connected • 00:15";
@@ -1881,14 +1865,19 @@
       }, 1100);
     }
 
+    function closePhoneModal() {
+      document.getElementById("phoneModal").classList.remove("active");
+      stopLifelineAudioAndResumeBGM();
+    }
+
     /* =========================================================
-       LIFELINE 3: ASK THE AUDIENCE (WEIGHTED RANDOM BAR CHART)
+       LIFELINE 3: ASK THE AUDIENCE ("ask.mp3" -> RESUMES "bgm.mp3")
        ========================================================= */
     function useAskAudience() {
-      if (lifelinesUsed.audience || answerConfirmed) return;
+      if (lifelinesUsed.audience || answerConfirmed || isGameOver) return;
       lifelinesUsed.audience = true;
       document.getElementById("ll-audience").classList.add("used");
-      playLifelineChime();
+      playLifelineAudio("ask");
 
       const q = quizQuestions[currentQ];
       const activeOptions = [0, 1, 2, 3].filter(i => !eliminatedIndices.has(i));
@@ -1936,8 +1925,9 @@
       }, 150);
     }
 
-    function closeModal(id) {
-      document.getElementById(id).classList.remove("active");
+    function closeAudienceModal() {
+      document.getElementById("audienceModal").classList.remove("active");
+      stopLifelineAudioAndResumeBGM();
     }
   </script>
 </body>
