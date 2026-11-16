@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Who Wants to Be a Millionaire? — English Grammar Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-deep: #030617;
+      --bg-radial: #0c194a;
+      --panel-bg: rgba(7, 15, 48, 0.92);
+      --gold: #f59e0b;
+      --gold-light: #fde047;
+      --blue-glow: #38bdf8;
+      --lozenge-bg: linear-gradient(180deg, #0b194b 0%, #050b29 50%, #0b194b 100%);
+      --lozenge-border: #60a5fa;
+      --orange-lock: linear-gradient(180deg, #f59e0b 0%, #b45309 50%, #f59e0b 100%);
+      --green-win: linear-gradient(180deg, #22c55e 0%, #15803d 50%, #22c55e 100%);
+      --red-lose: linear-gradient(180deg, #ef4444 0%, #991b1b 50%, #ef4444 100%);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 30%, var(--bg-radial) 0%, var(--bg-deep) 85%);
+      font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #ffffff;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      background:
+        conic-gradient(from 155deg at 20% -10%, rgba(56, 189, 248, 0.12) 0deg, transparent 25deg),
+        conic-gradient(from 180deg at 80% -10%, rgba(56, 189, 248, 0.12) 0deg, transparent 25deg);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Confetti Canvas */
+    #confettiCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* =========================================================
+       FULL-SCREEN APP SHELL
+       ========================================================= */
+    .app-container {
+      position: relative;
+      z-index: 1;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: env(safe-area-inset-top, 6px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 6px) env(safe-area-inset-left, 10px);
+    }
+
+    /* Top Control Bar */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 12px;
+      background: rgba(4, 10, 34, 0.85);
+      border-bottom: 1px solid rgba(96, 165, 250, 0.35);
+      flex-shrink: 0;
+      gap: 8px;
+    }
+
+    .brand-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 900;
+      font-size: 0.88rem;
+      letter-spacing: 0.5px;
+      color: var(--gold-light);
+      text-shadow: 0 0 10px rgba(245, 158, 11, 0.6);
+    }
+
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .hud-pill {
+      background: rgba(15, 30, 84, 0.9);
+      border: 1px solid var(--lozenge-border);
+      border-radius: 20px;
+      padding: 5px 12px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: #e0f2fe;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .hud-pill.practice-badge {
+      background: rgba(127, 29, 29, 0.92);
+      border-color: #f87171;
+      color: #fecaca;
+    }
+
+    .hud-pill:active {
+      transform: scale(0.96);
+    }
+
+    .mobile-ladder-toggle {
+      display: none;
+      background: linear-gradient(180deg, #d97706, #92400e);
+      border-color: var(--gold-light);
+      color: #fff;
+    }
+
+    /* =========================================================
+       MAIN RESPONSIVE STAGE (HORIZONTAL IPAD/PC vs VERTICAL PHONE)
+       ========================================================= */
+    .main-stage {
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      overflow: hidden;
+      gap: 12px;
+      padding: 6px 8px;
+    }
+
+    .quiz-arena {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      height: 100%;
+      overflow-y: auto;
+      padding: 2px 6px;
+    }
+
+    /* Center Emblem & Lifelines */
+    .stage-header {
+      width: 100%;
+      max-width: 840px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .millionaire-crest {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: radial-gradient(circle, #1e3a8a 0%, #060d2b 75%);
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 22px rgba(56, 189, 248, 0.5), inset 0 0 14px rgba(245, 158, 11, 0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .millionaire-crest::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: 50%;
+      border: 1px dashed rgba(253, 224, 71, 0.55);
+    }
+
+    .crest-sub {
+      font-size: 0.42rem;
+      letter-spacing: 0.8px;
+      color: #93c5fd;
+      text-transform: uppercase;
+    }
+
+    .crest-main {
+      font-size: 0.6rem;
+      font-weight: 900;
+      color: var(--gold-light);
+      line-height: 1.1;
+      margin: 2px 0;
+    }
+
+    /* Lifelines Bar */
+    .lifelines-bar {
+      display: flex;
+      justify-content: center;
+      gap: 14px;
+      width: 100%;
+    }
+
+    .lifeline-btn {
+      position: relative;
+      width: 108px;
+      height: 52px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at center, #1d4ed8 0%, #091540 100%);
+      border: 2.5px solid #60a5fa;
+      color: #ffffff;
+      font-family: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .lifeline-btn:hover:not(:disabled) {
+      border-color: var(--gold-light);
+      box-shadow: 0 0 18px rgba(250, 204, 21, 0.65);
+      transform: translateY(-2px);
+    }
+
+    .lifeline-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .lifeline-btn .ll-icon {
+      font-size: 1rem;
+      line-height: 1.1;
+    }
+
+    .lifeline-btn .ll-label {
+      font-size: 0.48rem;
+      letter-spacing: 0.2px;
+      line-height: 1.1;
+      color: #bae6fd;
+      text-transform: uppercase;
+    }
+
+    .lifeline-btn.used {
+      opacity: 0.38;
+      cursor: not-allowed;
+      border-color: #ef4444;
+      background: #1e1b2e;
+      box-shadow: none;
+    }
+
+    .lifeline-btn.used::after {
+      content: "✕";
+      position: absolute;
+      font-size: 2.3rem;
+      color: #ef4444;
+      font-weight: 900;
+      text-shadow: 0 0 6px #000;
+    }
+
+    /* =========================================================
+       HEXAGONAL QUESTION & ANSWER LOZENGES
+       ========================================================= */
+    .question-wrapper {
+      width: 100%;
+      max-width: 860px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin: 6px 0;
+    }
+
+    .question-wrapper::before,
+    .question-wrapper::after {
+      content: "";
+      flex: 1;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #60a5fa);
+    }
+    .question-wrapper::after {
+      background: linear-gradient(90deg, #60a5fa, transparent);
+    }
+
+    .lozenge-outer {
+      width: 94%;
+      background: linear-gradient(90deg, #3b82f6, #93c5fd, #3b82f6);
+      padding: 2.5px;
+      clip-path: polygon(22px 0%, calc(100% - 22px) 0%, 100% 50%, calc(100% - 22px) 100%, 22px 100%, 0% 50%);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+    }
+
+    .question-box {
+      background: var(--lozenge-bg);
+      clip-path: polygon(21px 0%, calc(100% - 21px) 0%, 100% 50%, calc(100% - 21px) 100%, 21px 100%, 0% 50%);
+      padding: 14px 34px;
+      text-align: center;
+      min-height: 76px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .q-category-tag {
+      font-size: 0.62rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold-light);
+      margin-bottom: 4px;
+    }
+
+    .q-text {
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.4;
+      color: #ffffff;
+    }
+
+    /* Answer Grid (2x2 on Horizontal iPad/PC) */
+    .answers-grid {
+      width: 100%;
+      max-width: 860px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px 14px;
+      margin-bottom: 4px;
+    }
+
+    .answer-lozenge-wrap {
+      background: linear-gradient(90deg, #3b82f6, #93c5fd, #3b82f6);
+      padding: 2px;
+      clip-path: polygon(18px 0%, calc(100% - 18px) 0%, 100% 50%, calc(100% - 18px) 100%, 18px 100%, 0% 50%);
+      transition: transform 0.12s ease;
+    }
+
+    .answer-lozenge-wrap:active {
+      transform: scale(0.98);
+    }
+
+    .answer-btn {
+      width: 100%;
+      height: 100%;
+      min-height: 50px;
+      background: var(--lozenge-bg);
+      clip-path: polygon(17px 0%, calc(100% - 17px) 0%, 100% 50%, calc(100% - 17px) 100%, 17px 100%, 0% 50%);
+      border: none;
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 0.94rem;
+      font-weight: 700;
+      padding: 8px 28px;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s ease;
+    }
+
+    .answer-btn:hover:not(:disabled) {
+      background: linear-gradient(180deg, #1d4ed8 0%, #0f256e 50%, #1d4ed8 100%);
+    }
+
+    .answer-letter {
+      color: var(--gold);
+      font-weight: 900;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    /* States: Selected/Locked (Orange), Correct (Green), Wrong (Red), Eliminated (50:50) */
+    .answer-lozenge-wrap.locked {
+      background: #fde047;
+    }
+    .answer-lozenge-wrap.locked .answer-btn {
+      background: var(--orange-lock);
+      color: #000000;
+    }
+    .answer-lozenge-wrap.locked .answer-letter {
+      color: #ffffff;
+    }
+
+    .answer-lozenge-wrap.correct {
+      background: #86efac;
+      animation: pulseWin 0.5s ease 2;
+    }
+    .answer-lozenge-wrap.correct .answer-btn {
+      background: var(--green-win);
+      color: #ffffff;
+    }
+    .answer-lozenge-wrap.correct .answer-letter {
+      color: #fef08a;
+    }
+
+    .answer-lozenge-wrap.wrong {
+      background: #fca5a5;
+    }
+    .answer-lozenge-wrap.wrong .answer-btn {
+      background: var(--red-lose);
+      color: #ffffff;
+    }
+
+    .answer-lozenge-wrap.eliminated {
+      opacity: 0.22;
+      pointer-events: none;
+    }
+
+    @keyframes pulseWin {
+      0%, 100% { filter: brightness(1); }
+      50% { filter: brightness(1.4); }
+    }
+
+    /* =========================================================
+       "FINAL ANSWER" CONFIRMATION POPUP BAR
+       ========================================================= */
+    .final-answer-bar {
+      width: 100%;
+      max-width: 860px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      padding: 8px 14px;
+      background: rgba(8, 20, 62, 0.92);
+      border: 2px solid var(--gold-light);
+      border-radius: 40px;
+      box-shadow: 0 0 24px rgba(245, 158, 11, 0.55);
+      animation: popScale 0.18s ease-out;
+    }
+
+    .final-answer-bar.active {
+      display: flex;
+    }
+
+    .selected-prompt-text {
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: #fde047;
+    }
+
+    .final-answer-btn {
+      background: linear-gradient(180deg, #f59e0b 0%, #b45309 100%);
+      border: 2.5px solid #fef08a;
+      color: #ffffff;
+      font-family: inherit;
+      font-weight: 900;
+      font-size: 0.9rem;
+      letter-spacing: 0.6px;
+      padding: 10px 26px;
+      border-radius: 26px;
+      cursor: pointer;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.7);
+      animation: pulseConfirm 1.2s infinite alternate;
+    }
+
+    .final-answer-btn:active {
+      transform: scale(0.95);
+    }
+
+    @keyframes pulseConfirm {
+      from { box-shadow: 0 0 10px rgba(245, 158, 11, 0.5); }
+      to { box-shadow: 0 0 22px rgba(253, 224, 71, 0.95); }
+    }
+
+    /* Explanation & Next / Game-Over Action Drawer */
+    .feedback-panel {
+      width: 100%;
+      max-width: 860px;
+      background: rgba(8, 20, 62, 0.96);
+      border: 2px solid var(--gold);
+      border-radius: 12px;
+      padding: 10px 14px;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+      animation: slideUp 0.25s ease-out;
+    }
+
+    .feedback-panel.active {
+      display: flex;
+    }
+
+    .feedback-panel.loss-border {
+      border-color: #ef4444;
+      background: rgba(30, 8, 24, 0.97);
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .feedback-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      font-size: 0.88rem;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .feedback-explanation {
+      font-size: 0.84rem;
+      line-height: 1.4;
+      color: #e0f2fe;
+      background: rgba(3, 8, 28, 0.65);
+      padding: 8px 12px;
+      border-radius: 8px;
+      border-left: 4px solid var(--blue-glow);
+    }
+
+    .feedback-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .next-btn {
+      background: linear-gradient(180deg, #f59e0b 0%, #d97706 100%);
+      border: 2px solid #fef08a;
+      color: #000000;
+      font-family: inherit;
+      font-weight: 900;
+      font-size: 0.82rem;
+      padding: 9px 20px;
+      border-radius: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.45);
+    }
+
+    .next-btn:active {
+      transform: scale(0.96);
+    }
+
+    .practice-continue-btn {
+      background: linear-gradient(180deg, #1e3a8a 0%, #0f172a 100%);
+      border: 2px solid #60a5fa;
+      color: #e0f2fe;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.8rem;
+      padding: 9px 18px;
+      border-radius: 24px;
+      cursor: pointer;
+    }
+
+    .practice-continue-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* =========================================================
+       RIGHT SIDEBAR: 20-TIER MONEY LADDER (HORIZONTAL HUD)
+       ========================================================= */
+    .money-ladder-sidebar {
+      width: 235px;
+      height: 100%;
+      background: rgba(5, 11, 38, 0.94);
+      border: 2px solid rgba(96, 165, 250, 0.45);
+      border-radius: 12px;
+      padding: 8px 10px;
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: space-between;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+      transition: border-color 0.3s ease;
+    }
+
+    .money-ladder-sidebar.frozen {
+      border-color: rgba(239, 68, 68, 0.65);
+    }
+
+    .ladder-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--gold);
+      transition: all 0.2s ease;
+    }
+
+    .ladder-row.milestone {
+      color: #ffffff;
+      font-weight: 900;
+    }
+
+    .ladder-row.passed {
+      color: #4ade80;
+      opacity: 0.75;
+    }
+
+    .ladder-row.active {
+      background: linear-gradient(90deg, #f59e0b, #d97706);
+      color: #000000;
+      font-weight: 900;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.8);
+      transform: scale(1.03);
+    }
+
+    .ladder-row.frozen-stop {
+      background: linear-gradient(90deg, #991b1b, #7f1d1d);
+      color: #fecaca;
+      font-weight: 900;
+      border: 1px solid #f87171;
+    }
+
+    .money-ladder-sidebar.frozen .ladder-row:not(.passed):not(.frozen-stop) {
+      opacity: 0.28;
+      text-decoration: line-through;
+    }
+
+    .ladder-num {
+      width: 24px;
+      display: inline-block;
+    }
+
+    /* =========================================================
+       MODALS: START SCREEN, PHONE A FRIEND, AUDIENCE, END SCREEN
+       ========================================================= */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 5, 18, 0.88);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      z-index: 100;
+    }
+
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .studio-modal {
+      width: 100%;
+      max-width: 500px;
+      background: linear-gradient(180deg, #0e1e5b 0%, #050b29 100%);
+      border: 3px solid var(--gold);
+      border-radius: 16px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 0 35px rgba(56, 189, 248, 0.45);
+      animation: popScale 0.22s ease-out;
+    }
+
+    @keyframes popScale {
+      from { transform: scale(0.88); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--gold-light);
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+    }
+
+    .lifeline-guide-list {
+      background: rgba(3, 8, 28, 0.78);
+      border: 1.5px solid rgba(96, 165, 250, 0.45);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      font-size: 0.84rem;
+      line-height: 1.4;
+      color: #f1f5f9;
+    }
+
+    .guide-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .guide-badge {
+      background: #1d4ed8;
+      border: 1px solid #93c5fd;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      border-radius: 12px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* Phone a Friend: Mr Tai */
+    .caller-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(3, 8, 28, 0.85);
+      border: 1.5px solid #60a5fa;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .caller-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #2563eb, #1e3a8a);
+      border: 2px solid var(--gold-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.7rem;
+      flex-shrink: 0;
+    }
+
+    .ringing-pulse {
+      animation: ringAnim 0.6s infinite alternate;
+    }
+
+    @keyframes ringAnim {
+      from { transform: rotate(-10deg) scale(1); }
+      to { transform: rotate(10deg) scale(1.08); }
+    }
+
+    .caller-speech {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      padding: 14px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #f8fafc;
+      text-align: left;
+      margin-bottom: 16px;
+      border-left: 4px solid var(--gold);
+    }
+
+    /* Ask the Audience Bar Chart */
+    .audience-chart {
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-end;
+      height: 190px;
+      background: rgba(2, 6, 23, 0.85);
+      border: 1.5px solid #60a5fa;
+      border-radius: 12px;
+      padding: 24px 16px 12px 16px;
+      margin-bottom: 16px;
+    }
+
+    .bar-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 56px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .bar-pct {
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: var(--gold-light);
+      margin-bottom: 6px;
+    }
+
+    .bar-fill {
+      width: 38px;
+      height: 0%;
+      background: linear-gradient(180deg, #38bdf8 0%, #1d4ed8 100%);
+      border: 1.5px solid #bae6fd;
+      border-bottom: none;
+      border-radius: 6px 6px 0 0;
+      transition: height 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+    }
+
+    .bar-label {
+      margin-top: 8px;
+      font-weight: 900;
+      font-size: 0.95rem;
+      color: #ffffff;
+      border-top: 2px solid #60a5fa;
+      width: 100%;
+      padding-top: 4px;
+    }
+
+    .modal-close-btn {
+      background: linear-gradient(180deg, #2563eb, #1e3a8a);
+      border: 2px solid #93c5fd;
+      color: #ffffff;
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.88rem;
+      padding: 10px 26px;
+      border-radius: 22px;
+      cursor: pointer;
+    }
+
+    /* =========================================================
+       VERTICAL PHONE PORTRAIT ADAPTATION
+       ========================================================= */
+    @media (max-width: 767px) and (orientation: portrait), (max-width: 640px) {
+      .brand-badge {
+        font-size: 0.72rem;
+      }
+
+      .mobile-ladder-toggle {
+        display: flex;
+      }
+
+      .main-stage {
+        flex-direction: column;
+        padding: 4px 6px;
+      }
+
+      .money-ladder-sidebar {
+        position: fixed;
+        top: 52px;
+        right: 10px;
+        width: 220px;
+        height: calc(100vh - 70px);
+        z-index: 90;
+        display: none;
+        box-shadow: -8px 8px 30px rgba(0, 0, 0, 0.95);
+      }
+
+      .money-ladder-sidebar.mobile-open {
+        display: flex;
+      }
+
+      .millionaire-crest {
+        width: 58px;
+        height: 58px;
+      }
+
+      .crest-main {
+        font-size: 0.5rem;
+      }
+
+      .lifelines-bar {
+        gap: 8px;
+      }
+
+      .lifeline-btn {
+        width: 96px;
+        height: 44px;
+      }
+
+      .lifeline-btn .ll-label {
+        font-size: 0.44rem;
+      }
+
+      .question-wrapper::before,
+      .question-wrapper::after {
+        display: none;
+      }
+
+      .lozenge-outer {
+        width: 100%;
+        clip-path: polygon(14px 0%, calc(100% - 14px) 0%, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0% 50%);
+      }
+
+      .question-box {
+        clip-path: polygon(13px 0%, calc(100% - 13px) 0%, 100% 50%, calc(100% - 13px) 100%, 13px 100%, 0% 50%);
+        padding: 10px 18px;
+        min-height: 66px;
+      }
+
+      .q-text {
+        font-size: 0.88rem;
+      }
+
+      .answers-grid {
+        grid-template-columns: 1fr;
+        gap: 6px;
+      }
+
+      .answer-btn {
+        min-height: 42px;
+        font-size: 0.84rem;
+        padding: 7px 20px;
+      }
+
+      .final-answer-bar {
+        padding: 6px 12px;
+        gap: 10px;
+      }
+
+      .selected-prompt-text {
+        font-size: 0.78rem;
+      }
+
+      .final-answer-btn {
+        font-size: 0.82rem;
+        padding: 8px 18px;
+      }
+
+      .feedback-panel {
+        padding: 8px 10px;
+      }
+
+      .feedback-explanation {
+        font-size: 0.76rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Massive Victory Confetti Overlay -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="app-container">
+    <!-- TOP HUD -->
+    <div class="top-bar">
+      <div class="brand-badge">
+        <span>💎</span>
+        <span>MILLIONAIRE: GRAMMAR EDITION</span>
+      </div>
+
+      <div class="top-controls">
+        <div class="hud-pill" id="hudPrizePill">Q1 / 20 • £100</div>
+        <button class="hud-pill" id="soundToggleBtn" onclick="toggleAudio()">🔊 SFX</button>
+        <button class="hud-pill mobile-ladder-toggle" onclick="toggleMobileLadder()">📊 Ladder</button>
+      </div>
+    </div>
+
+    <!-- MAIN STAGE -->
+    <div class="main-stage">
+      <!-- LEFT / CENTER ARENA -->
+      <div class="quiz-arena">
+        
+        <!-- Logo & Lifelines -->
+        <div class="stage-header">
+          <div class="millionaire-crest">
+            <span class="crest-sub">WHO WANTS TO BE A</span>
+            <span class="crest-main">MILLIONAIRE</span>
+            <span class="crest-sub">ENGLISH QUIZ</span>
+          </div>
+
+          <div class="lifelines-bar">
+            <button class="lifeline-btn" id="ll-5050" onclick="useFiftyFifty()">
+              <span class="ll-icon">50:50</span>
+              <span class="ll-label">50 / 50</span>
+            </button>
+            <button class="lifeline-btn" id="ll-phone" onclick="usePhoneFriend()">
+              <span class="ll-icon">📞</span>
+              <span class="ll-label">PHONE A FRIEND</span>
+            </button>
+            <button class="lifeline-btn" id="ll-audience" onclick="useAskAudience()">
+              <span class="ll-icon">📊</span>
+              <span class="ll-label">ASK AUDIENCE</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- QUESTION LOZENGE -->
+        <div class="question-wrapper">
+          <div class="lozenge-outer">
+            <div class="question-box">
+              <div class="q-category-tag" id="qPartLabel">PART 1: MULTIPLE CHOICE • QUESTION 1 OF 20</div>
+              <div class="q-text" id="questionText">Loading question...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 ANSWER LOZENGES -->
+        <div class="answers-grid" id="answersGrid">
+          <div class="answer-lozenge-wrap" id="wrap-0">
+            <button class="answer-btn" id="ans-0" onclick="selectAnswer(0)">
+              <span class="answer-letter">A:</span>
+              <span class="answer-content" id="text-0">Option A</span>
+            </button>
+          </div>
+          <div class="answer-lozenge-wrap" id="wrap-1">
+            <button class="answer-btn" id="ans-1" onclick="selectAnswer(1)">
+              <span class="answer-letter">B:</span>
+              <span class="answer-content" id="text-1">Option B</span>
+            </button>
+          </div>
+          <div class="answer-lozenge-wrap" id="wrap-2">
+            <button class="answer-btn" id="ans-2" onclick="selectAnswer(2)">
+              <span class="answer-letter">C:</span>
+              <span class="answer-content" id="text-2">Option C</span>
+            </button>
+          </div>
+          <div class="answer-lozenge-wrap" id="wrap-3">
+            <button class="answer-btn" id="ans-3" onclick="selectAnswer(3)">
+              <span class="answer-letter">D:</span>
+              <span class="answer-content" id="text-3">Option D</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- "FINAL ANSWER" CONFIRMATION POPUP BAR -->
+        <div class="final-answer-bar" id="finalAnswerBar">
+          <span class="selected-prompt-text" id="selectedChoiceText">Option A selected</span>
+          <button class="final-answer-btn" onclick="confirmFinalAnswer()">FINAL ANSWER? ✔</button>
+        </div>
+
+        <!-- EXPLANATION & CONTINUE / GAME-OVER DRAWER -->
+        <div class="feedback-panel" id="feedbackPanel">
+          <div class="feedback-header">
+            <span id="feedbackStatus" style="color: #4ade80;">✓ CORRECT ANSWER!</span>
+            <span id="feedbackPrizeWon" style="color: var(--gold-light);">WON: £100</span>
+          </div>
+          <div class="feedback-explanation" id="feedbackExplanation"></div>
+          <div class="feedback-actions" id="feedbackActions"></div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT SIDEBAR: 20-TIER MONEY LADDER -->
+      <div class="money-ladder-sidebar" id="moneyLadder"></div>
+    </div>
+  </div>
+
+  <!-- START SCREEN OVERLAY -->
+  <div class="modal-backdrop active" id="startModal" onclick="ensureIntroPlays()">
+    <div class="studio-modal">
+      <div style="font-size: 2.8rem; margin-bottom: 4px;">💎</div>
+      <div class="modal-title" style="font-size: 1.3rem;">WHO WANTS TO BE A MILLIONAIRE?</div>
+      <p style="font-size: 0.85rem; color: #bae6fd; line-height: 1.45; margin-bottom: 14px;">
+        Answer <strong>20 English Grammar & Vocabulary</strong> questions to win <strong>£1,000,000</strong>!
+      </p>
+
+      <div class="lifeline-guide-list">
+        <div style="font-weight: 800; color: var(--gold-light); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">Your 3 Lifelines (1 use each):</div>
+        <div class="guide-item">
+          <span class="guide-badge">50:50</span>
+          <span>Removes <strong>2 wrong answers</strong>.</span>
+        </div>
+        <div class="guide-item">
+          <span class="guide-badge">📞 Phone a Friend</span>
+          <span>Call <strong>Mr Tai</strong> for a grammar explanation.</span>
+        </div>
+        <div class="guide-item">
+          <span class="guide-badge">📊 Ask Audience</span>
+          <span>See the <strong>audience's votes</strong> on a chart.</span>
+        </div>
+      </div>
+
+      <button class="next-btn" style="width: 100%; font-size: 0.98rem; padding: 13px;" onclick="startGame()">ENTER THE HOT SEAT ➜</button>
+    </div>
+  </div>
+
+  <!-- PHONE A FRIEND (MR TAI) MODAL -->
+  <div class="modal-backdrop" id="phoneModal">
+    <div class="studio-modal">
+      <div class="modal-title">📞 PHONE A FRIEND</div>
+      <div class="caller-card">
+        <div class="caller-avatar ringing-pulse" id="mrTaiAvatar">👨‍🏫</div>
+        <div>
+          <div style="font-weight: 800; font-size: 1rem; color: var(--gold-light);">Mr Tai (English Teacher)</div>
+          <div style="font-size: 0.75rem; color: #4ade80;" id="callStatusText">Dialing friend...</div>
+        </div>
+      </div>
+      <div class="caller-speech" id="mrTaiSpeech">Connecting to Mr Tai...</div>
+      <button class="modal-close-btn" id="closePhoneBtn" style="display:none;" onclick="closeModal('phoneModal')">THANK YOU! ✔</button>
+    </div>
+  </div>
+
+  <!-- ASK THE AUDIENCE MODAL -->
+  <div class="modal-backdrop" id="audienceModal">
+    <div class="studio-modal">
+      <div class="modal-title">📊 ASK THE AUDIENCE</div>
+      <p style="font-size: 0.78rem; color: #93c5fd; margin-top: -6px; margin-bottom: 12px;">Live Studio Audience Poll Results</p>
+      
+      <div class="audience-chart">
+        <div class="bar-col">
+          <div class="bar-pct" id="pct-0">0%</div>
+          <div class="bar-fill" id="bar-0"></div>
+          <div class="bar-label">A</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-pct" id="pct-1">0%</div>
+          <div class="bar-fill" id="bar-1"></div>
+          <div class="bar-label">B</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-pct" id="pct-2">0%</div>
+          <div class="bar-fill" id="bar-2"></div>
+          <div class="bar-label">C</div>
+        </div>
+        <div class="bar-col">
+          <div class="bar-pct" id="pct-3">0%</div>
+          <div class="bar-fill" id="bar-3"></div>
+          <div class="bar-label">D</div>
+        </div>
+      </div>
+
+      <button class="modal-close-btn" onclick="closeModal('audienceModal')">BACK TO QUESTION ✔</button>
+    </div>
+  </div>
+
+  <!-- FINAL SUMMARY / VICTORY MODAL -->
+  <div class="modal-backdrop" id="endModal">
+    <div class="studio-modal">
+      <div style="font-size: 3.2rem; margin-bottom: 6px;" id="endEmoji">🏆</div>
+      <div class="modal-title" style="font-size: 1.35rem;" id="endTitle">CONGRATULATIONS!</div>
+      <div style="font-size: 1.65rem; font-weight: 900; color: #4ade80; margin: 10px 0;" id="endWinnings">£1,000,000</div>
+      <p style="font-size: 0.88rem; color: #e0f2fe; line-height: 1.5; margin-bottom: 18px;" id="endSummary">
+        You answered all 20 questions!
+      </p>
+      <button class="next-btn" style="width: 100%; font-size: 0.95rem; padding: 13px;" onclick="restartGame()">PLAY AGAIN FROM START 🔄</button>
+    </div>
+  </div>
+
+  <script>
+    /* =========================================================
+       20 QUESTIONS DATA (15 MULTIPLE CHOICE + 5 FILL IN THE BLANKS)
+       ========================================================= */
+    const prizeLadder = [
+      "£100", "£150", "£200", "£300", "£400",
+      "£500", "£600", "£700", "£800", "£1,000",
+      "£2,000", "£4,000", "£8,000", "£16,000", "£32,000",
+      "£64,000", "£125,000", "£250,000", "£500,000", "£1,000,000"
+    ];
+    const milestones = new Set([4, 9, 14, 19]);
+
+    const quizQuestions = [
+      // --- PART 1: MULTIPLE CHOICE (1 - 15) ---
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "1. May I have two ______ of bread, please?",
+        options: ["loaf", "loaves", "loafs", "packets"],
+        correct: 1,
+        explanation: "When counting more than one, the plural form of loaf changes -f to -ves (two loaves of bread)."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "2. Look at the monkeys! They are eating three ______ of bananas.",
+        options: ["bunch", "bunchs", "bunches", "bars"],
+        correct: 2,
+        explanation: "Words ending in -ch take -es in the plural form (three bunches of bananas)."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "3. I am thirsty. I would like a ______ of cola and a ______ of water.",
+        options: ["can / bottle", "bar / carton", "jar / tin", "loaf / bunch"],
+        correct: 0,
+        explanation: "Cola typically comes in a can, and water comes in a bottle."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "4. Grandma wants to buy two ______ of jam at the supermarket.",
+        options: ["jar", "jars", "tins", "packets"],
+        correct: 1,
+        explanation: "Jam comes in a jar; because there are 'two,' we use the plural jars."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "5. Which phrase of quantity is INCORRECT?",
+        options: ["a bar of chocolate", "a carton of soya milk", "a tin of bread", "a packet of potato chips"],
+        correct: 2,
+        explanation: "Bread is measured in loaves or slices, not tins (tins are used for items like peanuts or tuna fish)."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "6. Yummy Dark Chocolate is ______ than any other chocolate.",
+        options: ["delicious", "more delicious", "most delicious", "the most delicious"],
+        correct: 1,
+        explanation: "Delicious is a 3-syllable adjective. When comparing two things (using than), we add more before the adjective (more delicious than)."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "7. This strawberry cake has a cute kitten on it. I think it is ______ cake in the shop!",
+        options: ["pretty", "prettier", "more pretty", "the prettiest"],
+        correct: 3,
+        explanation: "Pretty is a 2-syllable adjective ending in -y, so we change -y to -i and add -est (plus the) when comparing it to all other cakes in the shop."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "8. A: How much is a packet of sour plums?   B: ______ eight dollars fifty.",
+        options: ["It’s", "They’re", "It has", "There is"],
+        correct: 0,
+        explanation: "Even though 'sour plums' is plural, the question asks about 'a packet' (singular), so we answer with It’s (It is)."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "9. My sister is very ______. She always helps our mum with the housework.",
+        options: ["helpful", "more helpful", "most helpful", "the most helpful"],
+        correct: 0,
+        explanation: "There is no comparison being made here, so we use the base form of the adjective (helpful)."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "10. Which comparative or superlative form is INCORRECT?",
+        options: ["polite → more polite", "funny → more funny", "heavy → heavier", "big → bigger"],
+        correct: 1,
+        explanation: "Although funny has 2 syllables, adjectives ending in -y are an exception: they change -y to -ier (funnier), not more funny."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "11. The green dress is $200 and the white dress is $150. The green dress is ______ than the white dress.",
+        options: ["expensive", "more expensive", "the most expensive", "expensiver"],
+        correct: 1,
+        explanation: "Expensive has 3 syllables. Comparing two dresses requires more + adjective + than."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "12. Dad bought four ______ of peanuts and two ______ of tuna fish.",
+        options: ["tins / tins", "bars / jars", "cartons / packets", "bunches / loaves"],
+        correct: 0,
+        explanation: "Both peanuts and tuna fish come in tins."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "13. A: ______ is a jar of peanut butter?   B: It’s fifteen dollars sixty.",
+        options: ["How many", "How much", "What", "Which"],
+        correct: 1,
+        explanation: "We use How much to ask about the price of an item."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "14. Out of all the drinks on the list, Merry Soya Milk is No. 1. It is ______ drink.",
+        options: ["popular", "more popular", "the most popular", "the more popular"],
+        correct: 2,
+        explanation: "Being 'No. 1' out of all drinks requires the superlative form. Since popular has 3 syllables, we use the most popular."
+      },
+      {
+        part: "PART 1: MULTIPLE CHOICE",
+        question: "15. Please give me a ______ of pizza and a ______ of green salad.",
+        options: ["slice / bowl", "cup / plate", "glass / bar", "carton / slice"],
+        correct: 0,
+        explanation: "According to the dialogue, pizza is served by the slice and salad is served in a bowl."
+      },
+
+      // --- PART 2: FILL IN THE BLANKS (16 - 20) ---
+      {
+        part: "PART 2: FILL IN THE BLANKS",
+        question: "16. I am hungry. I want to eat two ______ (packet) of biscuits and a ______ (bar) of chocolate.",
+        options: ["packet / bars", "packets / bar", "packets / bars", "packet / bar"],
+        correct: 1,
+        explanation: "'Two' requires the plural packets, while 'a' requires the singular bar."
+      },
+      {
+        part: "PART 2: FILL IN THE BLANKS",
+        question: "17. Mango ice cream is ______ (delicious) than strawberry ice cream, but chocolate ice cream is ______ (delicious) of all.",
+        options: [
+          "delicious / more delicious",
+          "more delicious / most delicious",
+          "more delicious / the most delicious",
+          "the most delicious / more delicious"
+        ],
+        correct: 2,
+        explanation: "The first blank compares two ice creams (than → more delicious). The second blank compares all ice creams ('of all' → the most delicious)."
+      },
+      {
+        part: "PART 2: FILL IN THE BLANKS",
+        question: "18. Let's buy the mango cake instead of the chocolate cake. It is $98, so it is ______ (cheap) than the chocolate cake.",
+        options: ["more cheap", "cheapest", "the cheapest", "cheaper"],
+        correct: 3,
+        explanation: "Cheap is a 1-syllable adjective, so we simply add -er when comparing two cakes (cheaper than)."
+      },
+      {
+        part: "PART 2: FILL IN THE BLANKS",
+        question: "19. For breakfast, Mum usually drinks a ______ of coffee and eats a ______ of fried noodles.",
+        options: ["cup / plate", "bowl / glass", "can / slice", "carton / jar"],
+        correct: 0,
+        explanation: "Coffee is served in a cup, and fried noodles are served on a plate."
+      },
+      {
+        part: "PART 2: FILL IN THE BLANKS",
+        question: "20. John is ______ (hard-working) student in our class. He always gets good marks.",
+        options: ["more hard-working", "the most hard-working", "most hard-working", "hard-workinger"],
+        correct: 1,
+        explanation: "Hard-working is a long adjective (3 syllables), and comparing John to the whole class ('in our class') requires the superlative form (the most hard-working)."
+      }
+    ];
+
+    /* =========================================================
+       AUDIO SYSTEM (MP3 TRACKS + WEBAUDIO SYNTH FALLBACK)
+       ========================================================= */
+    const mp3Tracks = {
+      intro: new Audio("intro.mp3"),
+      bgm: new Audio("bgm.mp3"),
+      win: new Audio("win.mp3"),
+      lose: new Audio("lose.mp3"),
+      finalWin: new Audio("final win.mp3")
+    };
+
+    mp3Tracks.intro.loop = true;
+    mp3Tracks.intro.volume = 0.65;
+    mp3Tracks.bgm.loop = true;
+    mp3Tracks.bgm.volume = 0.45;
+    mp3Tracks.win.volume = 0.8;
+    mp3Tracks.lose.volume = 0.8;
+    mp3Tracks.finalWin.volume = 0.9;
+
+    let audioCtx = null;
+    let isMuted = false;
+    let introStarted = false;
+
+    function initAudioCtx() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    }
+
+    function stopAllTracks() {
+      Object.values(mp3Tracks).forEach(track => {
+        try {
+          track.pause();
+          track.currentTime = 0;
+        } catch (e) {}
+      });
+    }
+
+    function playMp3Track(trackKey, fallbackSynthFn) {
+      if (isMuted) return;
+      const track = mp3Tracks[trackKey];
+      if (!track) return;
+
+      track.currentTime = 0;
+      const playPromise = track.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          if (fallbackSynthFn) fallbackSynthFn();
+        });
+      }
+    }
+
+    function ensureIntroPlays() {
+      initAudioCtx();
+      if (!introStarted && document.getElementById("startModal").classList.contains("active") && !isMuted) {
+        mp3Tracks.intro.play().then(() => {
+          introStarted = true;
+        }).catch(() => {});
+      }
+    }
+
+    // Attempt autoplay on page load (works if browser allows; otherwise triggers on first touch)
+    window.addEventListener("DOMContentLoaded", () => {
+      ensureIntroPlays();
+    });
+
+    function toggleAudio() {
+      isMuted = !isMuted;
+      document.getElementById("soundToggleBtn").textContent = isMuted ? "🔇 MUTED" : "🔊 SFX";
+      Object.values(mp3Tracks).forEach(t => { t.muted = isMuted; });
+      if (!isMuted) {
+        if (document.getElementById("startModal").classList.contains("active")) {
+          ensureIntroPlays();
+        } else if (!answerConfirmed) {
+          mp3Tracks.bgm.play().catch(() => {});
+        }
+      }
+    }
+
+    function playNote(freq, type, duration, delay = 0, vol = 0.12) {
+      if (isMuted || !audioCtx) return;
+      setTimeout(() => {
+        try {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+          gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + duration);
+        } catch (e) {}
+      }, delay * 1000);
+    }
+
+    function playSelectSound() {
+      initAudioCtx();
+      playNote(330, 'sine', 0.14, 0, 0.1);
+    }
+
+    function playLockSound() {
+      initAudioCtx();
+      playNote(220, 'triangle', 0.25, 0, 0.14);
+      playNote(330, 'sine', 0.35, 0.08, 0.12);
+    }
+
+    function playWinAudio(isGrandPrize) {
+      stopAllTracks();
+      if (isGrandPrize) {
+        playMp3Track("finalWin", () => {
+          playNote(392.00, 'triangle', 0.2, 0.0, 0.18);
+          playNote(493.88, 'triangle', 0.2, 0.14, 0.18);
+          playNote(587.33, 'triangle', 0.22, 0.28, 0.18);
+          playNote(783.99, 'triangle', 0.7, 0.42, 0.22);
+        });
+      } else {
+        playMp3Track("win", () => {
+          playNote(392.00, 'triangle', 0.18, 0.0, 0.15);
+          playNote(493.88, 'triangle', 0.18, 0.12, 0.15);
+          playNote(587.33, 'triangle', 0.22, 0.24, 0.16);
+          playNote(783.99, 'triangle', 0.55, 0.36, 0.18);
+        });
+      }
+    }
+
+    function playLoseAudio() {
+      stopAllTracks();
+      playMp3Track("lose", () => {
+        playNote(146.83, 'sawtooth', 0.35, 0.0, 0.16);
+        playNote(110.00, 'sawtooth', 0.55, 0.18, 0.18);
+      });
+    }
+
+    function playLifelineChime() {
+      initAudioCtx();
+      playNote(587.33, 'sine', 0.15, 0.0, 0.14);
+      playNote(880.00, 'sine', 0.3, 0.1, 0.14);
+    }
+
+    /* =========================================================
+       MASSIVE CONFETTI CANNON ENGINE
+       ========================================================= */
+    const confettiCanvas = document.getElementById("confettiCanvas");
+    const cCtx = confettiCanvas.getContext("2d");
+    let confettiParticles = [];
+    let confettiAnimId = null;
+
+    function resizeConfettiCanvas() {
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeConfettiCanvas);
+    resizeConfettiCanvas();
+
+    function launchMassiveConfetti() {
+      confettiParticles = [];
+      const colors = [
+        "#fde047", "#f59e0b", "#38bdf8", "#22c55e",
+        "#ef4444", "#a855f7", "#ffffff", "#fb7185"
+      ];
+
+      // Spawn 360 high-density confetti pieces across the top and sides
+      for (let i = 0; i < 360; i++) {
+        confettiParticles.push({
+          x: Math.random() * confettiCanvas.width,
+          y: Math.random() * -confettiCanvas.height * 0.8 - 20,
+          w: Math.random() * 11 + 6,
+          h: Math.random() * 7 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: (Math.random() - 0.5) * 6,
+          vy: Math.random() * 4.5 + 2.5,
+          rotation: Math.random() * 360,
+          rotSpeed: (Math.random() - 0.5) * 14,
+          wobble: Math.random() * 10,
+          wobbleSpeed: Math.random() * 0.12 + 0.04
+        });
+      }
+
+      if (!confettiAnimId) {
+        animateConfetti();
+      }
+    }
+
+    function stopConfetti() {
+      if (confettiAnimId) {
+        cancelAnimationFrame(confettiAnimId);
+        confettiAnimId = null;
+      }
+      confettiParticles = [];
+      cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+
+    function animateConfetti() {
+      cCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      let activeCount = 0;
+
+      confettiParticles.forEach(p => {
+        p.wobble += p.wobbleSpeed;
+        p.x += p.vx + Math.sin(p.wobble) * 1.6;
+        p.y += p.vy;
+        p.rotation += p.rotSpeed;
+
+        if (p.y < confettiCanvas.height + 30) {
+          activeCount++;
+          cCtx.save();
+          cCtx.translate(p.x, p.y);
+          cCtx.rotate((p.rotation * Math.PI) / 180);
+          cCtx.fillStyle = p.color;
+          cCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          cCtx.restore();
+        }
+      });
+
+      if (activeCount > 0) {
+        confettiAnimId = requestAnimationFrame(animateConfetti);
+      } else {
+        stopConfetti();
+      }
+    }
+
+    /* =========================================================
+       GAME STATE & PROGRESSION LOGIC
+       ========================================================= */
+    let currentQ = 0;
+    let correctCount = 0;
+    let selectedAnswerIndex = null;
+    let answerConfirmed = false;
+    let eliminatedIndices = new Set();
+    let lifelinesUsed = { fifty: false, phone: false, audience: false };
+
+    // Elimination / Practice Mode state
+    let isGameOverEliminated = false; // True once the player chooses a wrong answer
+    let frozenLadderIndex = -1;       // The exact rung where progress stopped
+    let bankedPrize = "£0";           // What they won before getting eliminated
+
+    function buildMoneyLadder() {
+      const ladderEl = document.getElementById("moneyLadder");
+      ladderEl.classList.remove("frozen");
+      ladderEl.innerHTML = "";
+      for (let i = 0; i < prizeLadder.length; i++) {
+        const row = document.createElement("div");
+        row.className = "ladder-row";
+        if (milestones.has(i)) row.classList.add("milestone");
+        row.id = `ladder-${i}`;
+        row.innerHTML = `<span><span class="ladder-num">${i + 1}</span></span><span>${prizeLadder[i]}</span>`;
+        ladderEl.appendChild(row);
+      }
+    }
+
+    function updateLadderHighlight() {
+      const ladderEl = document.getElementById("moneyLadder");
+      const hudPill = document.getElementById("hudPrizePill");
+
+      if (isGameOverEliminated) {
+        // Progress column stops! Keep ladder frozen at frozenLadderIndex
+        ladderEl.classList.add("frozen");
+        for (let i = 0; i < prizeLadder.length; i++) {
+          const row = document.getElementById(`ladder-${i}`);
+          row.classList.remove("active", "passed", "frozen-stop");
+          if (i < frozenLadderIndex) row.classList.add("passed");
+          if (i === frozenLadderIndex) row.classList.add("frozen-stop");
+        }
+        hudPill.classList.add("practice-badge");
+        hudPill.textContent = `Q${currentQ + 1} / 20 • NO PRIZE (BANKED: ${bankedPrize})`;
+      } else {
+        ladderEl.classList.remove("frozen");
+        for (let i = 0; i < prizeLadder.length; i++) {
+          const row = document.getElementById(`ladder-${i}`);
+          row.classList.remove("active", "passed", "frozen-stop");
+          if (i < currentQ) row.classList.add("passed");
+          if (i === currentQ) row.classList.add("active");
+        }
+        hudPill.classList.remove("practice-badge");
+        hudPill.textContent = `Q${currentQ + 1} / 20 • ${prizeLadder[currentQ]}`;
+      }
+    }
+
+    function toggleMobileLadder() {
+      document.getElementById("moneyLadder").classList.toggle("mobile-open");
+    }
+
+    function startGame() {
+      initAudioCtx();
+      document.getElementById("startModal").classList.remove("active");
+      buildMoneyLadder();
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      selectedAnswerIndex = null;
+      answerConfirmed = false;
+      eliminatedIndices.clear();
+
+      // Stop intro/win/lose and loop bgm.mp3 during questions
+      stopAllTracks();
+      playMp3Track("bgm", null);
+
+      const q = quizQuestions[currentQ];
+      document.getElementById("qPartLabel").textContent = `${q.part} • QUESTION ${currentQ + 1} OF 20`;
+      document.getElementById("questionText").textContent = q.question;
+
+      for (let i = 0; i < 4; i++) {
+        const wrap = document.getElementById(`wrap-${i}`);
+        const btn = document.getElementById(`ans-${i}`);
+        wrap.className = "answer-lozenge-wrap";
+        btn.disabled = false;
+        document.getElementById(`text-${i}`).textContent = q.options[i];
+      }
+
+      document.getElementById("finalAnswerBar").classList.remove("active");
+      const feedbackPanel = document.getElementById("feedbackPanel");
+      feedbackPanel.classList.remove("active", "loss-border");
+      updateLadderHighlight();
+    }
+
+    function selectAnswer(chosenIndex) {
+      if (answerConfirmed || eliminatedIndices.has(chosenIndex)) return;
+
+      selectedAnswerIndex = chosenIndex;
+      playSelectSound();
+
+      for (let i = 0; i < 4; i++) {
+        const wrap = document.getElementById(`wrap-${i}`);
+        wrap.classList.remove("locked");
+        if (i === chosenIndex) {
+          wrap.classList.add("locked");
+        }
+      }
+
+      const letters = ["A", "B", "C", "D"];
+      const q = quizQuestions[currentQ];
+      document.getElementById("selectedChoiceText").textContent = `${letters[chosenIndex]}: ${q.options[chosenIndex]}`;
+      document.getElementById("finalAnswerBar").classList.add("active");
+    }
+
+    function confirmFinalAnswer() {
+      if (selectedAnswerIndex === null || answerConfirmed) return;
+      answerConfirmed = true;
+
+      document.getElementById("finalAnswerBar").classList.remove("active");
+
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`ans-${i}`).disabled = true;
+      }
+
+      const chosenIndex = selectedAnswerIndex;
+      const chosenWrap = document.getElementById(`wrap-${chosenIndex}`);
+      playLockSound();
+
+      const q = quizQuestions[currentQ];
+
+      setTimeout(() => {
+        chosenWrap.classList.remove("locked");
+
+        const feedbackPanel = document.getElementById("feedbackPanel");
+        const statusEl = document.getElementById("feedbackStatus");
+        const prizeEl = document.getElementById("feedbackPrizeWon");
+        const expEl = document.getElementById("feedbackExplanation");
+        const actionsEl = document.getElementById("feedbackActions");
+
+        expEl.textContent = q.explanation;
+        actionsEl.innerHTML = "";
+
+        if (chosenIndex === q.correct) {
+          // --- CORRECT ANSWER ---
+          chosenWrap.classList.add("correct");
+          correctCount++;
+          const isFinalQ = (currentQ === quizQuestions.length - 1);
+
+          if (!isGameOverEliminated) {
+            bankedPrize = prizeLadder[currentQ];
+            playWinAudio(isFinalQ);
+
+            statusEl.style.color = "#4ade80";
+            statusEl.textContent = isFinalQ ? "👑 MILLIONAIRE! FINAL ANSWER CORRECT!" : "✓ CORRECT! FINAL ANSWER!";
+            prizeEl.style.color = "var(--gold-light)";
+            prizeEl.textContent = `WON: ${bankedPrize}`;
+
+            if (isFinalQ) {
+              launchMassiveConfetti();
+            }
+          } else {
+            // Already eliminated earlier: plays win.mp3, but wins NO money and ladder does not progress
+            playWinAudio(false);
+            statusEl.style.color = "#4ade80";
+            statusEl.textContent = "✓ CORRECT! (PRACTICE MODE)";
+            prizeEl.style.color = "#fca5a5";
+            prizeEl.textContent = `NO MONEY WON (BANKED: ${bankedPrize})`;
+          }
+
+          const nextBtn = document.createElement("button");
+          nextBtn.className = "next-btn";
+          nextBtn.textContent = isFinalQ ? "SEE FINAL RESULTS 🏆" : "NEXT QUESTION ➜";
+          nextBtn.onclick = nextQuestion;
+          actionsEl.appendChild(nextBtn);
+
+        } else {
+          // --- WRONG ANSWER ---
+          chosenWrap.classList.add("wrong");
+          document.getElementById(`wrap-${q.correct}`).classList.add("correct");
+          playLoseAudio();
+
+          const correctLetter = ["A", "B", "C", "D"][q.correct];
+          feedbackPanel.classList.add("loss-border");
+
+          if (!isGameOverEliminated) {
+            // First time getting a question wrong -> Game ends & they take what they won!
+            isGameOverEliminated = true;
+            frozenLadderIndex = currentQ;
+            updateLadderHighlight();
+
+            statusEl.style.color = "#f87171";
+            statusEl.textContent = `✕ GAME OVER — Correct Answer: ${correctLetter}`;
+            prizeEl.style.color = "#fde047";
+            prizeEl.textContent = `YOU TAKE HOME: ${bankedPrize}`;
+
+            // Option 1: Try Again from the Start
+            const restartBtn = document.createElement("button");
+            restartBtn.className = "next-btn";
+            restartBtn.textContent = "TRY AGAIN FROM START 🔄";
+            restartBtn.onclick = restartGame;
+            actionsEl.appendChild(restartBtn);
+
+            // Option 2: Keep Playing Anyway (No Money, Ladder Frozen)
+            if (currentQ < quizQuestions.length - 1) {
+              const keepPlayingBtn = document.createElement("button");
+              keepPlayingBtn.className = "practice-continue-btn";
+              keepPlayingBtn.textContent = "KEEP PLAYING (NO MONEY) ➜";
+              keepPlayingBtn.onclick = nextQuestion;
+              actionsEl.appendChild(keepPlayingBtn);
+            }
+          } else {
+            // Already in Practice Mode after losing earlier
+            statusEl.style.color = "#f87171";
+            statusEl.textContent = `✕ INCORRECT — Correct Answer: ${correctLetter}`;
+            prizeEl.style.color = "#fca5a5";
+            prizeEl.textContent = `NO MONEY WON (BANKED: ${bankedPrize})`;
+
+            const restartBtn = document.createElement("button");
+            restartBtn.className = "practice-continue-btn";
+            restartBtn.textContent = "TRY AGAIN FROM START 🔄";
+            restartBtn.onclick = restartGame;
+            actionsEl.appendChild(restartBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "next-btn";
+            nextBtn.textContent = currentQ === quizQuestions.length - 1 ? "SEE SUMMARY 📋" : "NEXT QUESTION ➜";
+            nextBtn.onclick = nextQuestion;
+            actionsEl.appendChild(nextBtn);
+          }
+        }
+
+        feedbackPanel.classList.add("active");
+      }, 600);
+    }
+
+    function nextQuestion() {
+      currentQ++;
+      if (currentQ < quizQuestions.length) {
+        loadQuestion();
+      } else {
+        showEndScreen();
+      }
+    }
+
+    function showEndScreen() {
+      stopAllTracks();
+      const endModal = document.getElementById("endModal");
+      const endEmoji = document.getElementById("endEmoji");
+      const endTitle = document.getElementById("endTitle");
+      const endWinnings = document.getElementById("endWinnings");
+      const endSummary = document.getElementById("endSummary");
+
+      if (!isGameOverEliminated && correctCount === 20) {
+        endEmoji.textContent = "👑";
+        endTitle.textContent = "YOU ARE A MILLIONAIRE!";
+        endWinnings.textContent = "£1,000,000";
+        endSummary.textContent = "Flawless 20 / 20! You conquered every phrase of quantity and adjective comparison to win a million pounds!";
+        playMp3Track("finalWin", null);
+        launchMassiveConfetti();
+      } else {
+        endEmoji.textContent = "🏆";
+        endTitle.textContent = "GAME COMPLETE!";
+        endWinnings.textContent = `Prize Won: ${bankedPrize}`;
+        endSummary.textContent = `You answered ${correctCount} / 20 questions correctly. Your money ladder stopped at ${bankedPrize}. Try again from the start to reach £1,000,000!`;
+      }
+
+      endModal.classList.add("active");
+    }
+
+    function restartGame() {
+      stopConfetti();
+      stopAllTracks();
+      currentQ = 0;
+      correctCount = 0;
+      isGameOverEliminated = false;
+      frozenLadderIndex = -1;
+      bankedPrize = "£0";
+      lifelinesUsed = { fifty: false, phone: false, audience: false };
+      document.getElementById("ll-5050").classList.remove("used");
+      document.getElementById("ll-phone").classList.remove("used");
+      document.getElementById("ll-audience").classList.remove("used");
+      document.getElementById("endModal").classList.remove("active");
+      buildMoneyLadder();
+      loadQuestion();
+    }
+
+    /* =========================================================
+       LIFELINE 1: 50:50
+       ========================================================= */
+    function useFiftyFifty() {
+      if (lifelinesUsed.fifty || answerConfirmed) return;
+      lifelinesUsed.fifty = true;
+      document.getElementById("ll-5050").classList.add("used");
+      playLifelineChime();
+
+      const q = quizQuestions[currentQ];
+      const wrongIndices = [0, 1, 2, 3].filter(idx => idx !== q.correct);
+      wrongIndices.sort(() => Math.random() - 0.5);
+      const toRemove = wrongIndices.slice(0, 2);
+
+      toRemove.forEach(idx => {
+        eliminatedIndices.add(idx);
+        const wrap = document.getElementById(`wrap-${idx}`);
+        wrap.classList.remove("locked");
+        wrap.classList.add("eliminated");
+        document.getElementById(`ans-${idx}`).disabled = true;
+
+        if (selectedAnswerIndex === idx) {
+          selectedAnswerIndex = null;
+          document.getElementById("finalAnswerBar").classList.remove("active");
+        }
+      });
+    }
+
+    /* =========================================================
+       LIFELINE 2: PHONE A FRIEND (CALLING MR TAI)
+       ========================================================= */
+    function usePhoneFriend() {
+      if (lifelinesUsed.phone || answerConfirmed) return;
+      lifelinesUsed.phone = true;
+      document.getElementById("ll-phone").classList.add("used");
+      playLifelineChime();
+
+      const q = quizQuestions[currentQ];
+      const letters = ["A", "B", "C", "D"];
+      const correctLetter = letters[q.correct];
+      const correctText = q.options[q.correct];
+
+      const phoneModal = document.getElementById("phoneModal");
+      const statusText = document.getElementById("callStatusText");
+      const speechEl = document.getElementById("mrTaiSpeech");
+      const closeBtn = document.getElementById("closePhoneBtn");
+      const avatar = document.getElementById("mrTaiAvatar");
+
+      statusText.textContent = "Ringing friend...";
+      statusText.style.color = "#facc15";
+      speechEl.textContent = "📞 Ring... ring... Calling Mr Tai...";
+      closeBtn.style.display = "none";
+      avatar.classList.add("ringing-pulse");
+      phoneModal.classList.add("active");
+
+      playNote(523.25, 'sine', 0.25, 0.1, 0.1);
+      playNote(659.25, 'sine', 0.25, 0.35, 0.1);
+
+      setTimeout(() => {
+        avatar.classList.remove("ringing-pulse");
+        statusText.textContent = "Connected • 00:15";
+        statusText.style.color = "#4ade80";
+        speechEl.innerHTML = `
+          "Hello! <strong>Mr Tai</strong> here! Let's look at the grammar rule for this question:<br/><br/>
+          <em>${q.explanation}</em><br/><br/>
+          So you should choose <strong>${correctLetter}: ${correctText}</strong>!"
+        `;
+        closeBtn.style.display = "inline-block";
+      }, 1100);
+    }
+
+    /* =========================================================
+       LIFELINE 3: ASK THE AUDIENCE (WEIGHTED RANDOM BAR CHART)
+       ========================================================= */
+    function useAskAudience() {
+      if (lifelinesUsed.audience || answerConfirmed) return;
+      lifelinesUsed.audience = true;
+      document.getElementById("ll-audience").classList.add("used");
+      playLifelineChime();
+
+      const q = quizQuestions[currentQ];
+      const activeOptions = [0, 1, 2, 3].filter(i => !eliminatedIndices.has(i));
+      const votes = [0, 0, 0, 0];
+
+      const audienceIsConfident = Math.random() < 0.88;
+
+      if (activeOptions.length === 2) {
+        const otherIdx = activeOptions.find(i => i !== q.correct);
+        const correctShare = audienceIsConfident
+          ? Math.floor(Math.random() * 24) + 64
+          : Math.floor(Math.random() * 14) + 45;
+        votes[q.correct] = correctShare;
+        votes[otherIdx] = 100 - correctShare;
+      } else {
+        const correctShare = audienceIsConfident
+          ? Math.floor(Math.random() * 25) + 52
+          : Math.floor(Math.random() * 12) + 34;
+
+        let remaining = 100 - correctShare;
+        const wrongIndices = [0, 1, 2, 3].filter(i => i !== q.correct);
+        
+        const r1 = Math.floor(Math.random() * (remaining * 0.6));
+        const r2 = Math.floor(Math.random() * ((remaining - r1) * 0.75));
+        const r3 = remaining - r1 - r2;
+
+        votes[q.correct] = correctShare;
+        votes[wrongIndices[0]] = r1;
+        votes[wrongIndices[1]] = r2;
+        votes[wrongIndices[2]] = r3;
+      }
+
+      for (let i = 0; i < 4; i++) {
+        document.getElementById(`bar-${i}`).style.height = "0%";
+        document.getElementById(`pct-${i}`).textContent = "0%";
+      }
+
+      document.getElementById("audienceModal").classList.add("active");
+
+      setTimeout(() => {
+        for (let i = 0; i < 4; i++) {
+          document.getElementById(`bar-${i}`).style.height = `${votes[i]}%`;
+          document.getElementById(`pct-${i}`).textContent = `${votes[i]}%`;
+        }
+      }, 150);
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("active");
+    }
+  </script>
+</body>
+</html>
