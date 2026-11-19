@@ -10,6 +10,7 @@
 
   <style>
     :root {
+      --app-height: 100vh;
       --bg-deep: #030617;
       --bg-radial: #0c194a;
       --panel-bg: rgba(7, 15, 48, 0.92);
@@ -35,6 +36,7 @@
       padding: 0;
       width: 100vw;
       height: 100vh;
+      height: var(--app-height);
       overflow: hidden;
       background: radial-gradient(circle at 50% 30%, var(--bg-radial) 0%, var(--bg-deep) 85%);
       font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -57,7 +59,7 @@
       position: fixed;
       inset: 0;
       width: 100vw;
-      height: 100vh;
+      height: var(--app-height);
       pointer-events: none;
       z-index: 9999;
     }
@@ -70,6 +72,7 @@
       z-index: 1;
       width: 100vw;
       height: 100vh;
+      height: var(--app-height);
       display: flex;
       flex-direction: column;
       padding: env(safe-area-inset-top, 6px) env(safe-area-inset-right, 10px) env(safe-area-inset-bottom, 6px) env(safe-area-inset-left, 10px);
@@ -101,15 +104,17 @@
     .top-controls {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .hud-pill {
       background: rgba(15, 30, 84, 0.9);
       border: 1px solid var(--lozenge-border);
       border-radius: 20px;
-      padding: 5px 12px;
-      font-size: 0.76rem;
+      padding: 5px 11px;
+      font-family: inherit;
+      font-size: 0.74rem;
       font-weight: 700;
       color: #e0f2fe;
       cursor: pointer;
@@ -124,6 +129,12 @@
       color: #fecaca;
     }
 
+    .hud-pill.fs-active {
+      background: rgba(21, 128, 61, 0.9);
+      border-color: #86efac;
+      color: #ffffff;
+    }
+
     .hud-pill:active {
       transform: scale(0.96);
     }
@@ -133,6 +144,53 @@
       background: linear-gradient(180deg, #d97706, #92400e);
       border-color: var(--gold-light);
       color: #fff;
+    }
+
+    /* Older iPad Safari Fullscreen Helper Banner */
+    .ios-fs-tip {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: linear-gradient(90deg, #1e3a8a, #0f172a);
+      border-bottom: 1.5px solid var(--gold);
+      padding: 6px 14px;
+      font-size: 0.74rem;
+      color: #fef08a;
+      flex-shrink: 0;
+    }
+
+    .ios-fs-tip.active {
+      display: flex;
+    }
+
+    .ios-tip-close {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid #93c5fd;
+      color: #fff;
+      border-radius: 12px;
+      padding: 2px 9px;
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* Compact Fit Mode when toggled on older iPads */
+    body.compact-fit .millionaire-crest {
+      width: 54px;
+      height: 54px;
+    }
+    body.compact-fit .crest-main {
+      font-size: 0.48rem;
+    }
+    body.compact-fit .stage-header {
+      flex-direction: row;
+      justify-content: center;
+      gap: 16px;
+    }
+    body.compact-fit .lifelines-bar {
+      width: auto;
     }
 
     /* =========================================================
@@ -629,6 +687,7 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
+      height: var(--app-height);
       background: rgba(2, 5, 18, 0.88);
       backdrop-filter: blur(4px);
       display: none;
@@ -645,10 +704,12 @@
     .studio-modal {
       width: 100%;
       max-width: 500px;
+      max-height: 92%;
+      overflow-y: auto;
       background: linear-gradient(180deg, #0e1e5b 0%, #050b29 100%);
       border: 3px solid var(--gold);
       border-radius: 16px;
-      padding: 22px;
+      padding: 20px;
       text-align: center;
       box-shadow: 0 0 35px rgba(56, 189, 248, 0.45);
       animation: popScale 0.22s ease-out;
@@ -672,7 +733,7 @@
       border: 1.5px solid rgba(96, 165, 250, 0.45);
       border-radius: 12px;
       padding: 12px 14px;
-      margin-bottom: 18px;
+      margin-bottom: 16px;
       text-align: left;
       display: flex;
       flex-direction: column;
@@ -814,7 +875,12 @@
        ========================================================= */
     @media (max-width: 767px) and (orientation: portrait), (max-width: 640px) {
       .brand-badge {
-        font-size: 0.72rem;
+        font-size: 0.68rem;
+      }
+
+      .hud-pill {
+        padding: 4px 8px;
+        font-size: 0.68rem;
       }
 
       .mobile-ladder-toggle {
@@ -831,7 +897,7 @@
         top: 52px;
         right: 10px;
         width: 220px;
-        height: calc(100vh - 70px);
+        height: calc(var(--app-height) - 70px);
         z-index: 90;
         display: none;
         box-shadow: -8px 8px 30px rgba(0, 0, 0, 0.95);
@@ -933,9 +999,16 @@
 
       <div class="top-controls">
         <div class="hud-pill" id="hudPrizePill">Q1 / 20 • £100</div>
+        <button class="hud-pill" id="fullscreenBtn" onclick="toggleFullScreen()">⛶ Fullscreen</button>
         <button class="hud-pill" id="soundToggleBtn" onclick="toggleAudio()">🔊 SFX</button>
         <button class="hud-pill mobile-ladder-toggle" onclick="toggleMobileLadder()">📊 Ladder</button>
       </div>
+    </div>
+
+    <!-- HELPER BANNER FOR OLDER IPAD SAFARI -->
+    <div class="ios-fs-tip" id="iosFsTip">
+      <span>💡 Older iPad Safari Tip: Tap Safari's <strong>Share (⍐)</strong> button → <strong>"Add to Home Screen"</strong> for true 100% fullscreen!</span>
+      <button class="ios-tip-close" onclick="dismissIosTip()">OK</button>
     </div>
 
     <!-- MAIN STAGE -->
@@ -1053,7 +1126,10 @@
         </div>
       </div>
 
-      <button class="next-btn" style="width: 100%; font-size: 0.98rem; padding: 13px;" onclick="startGame()">ENTER THE HOT SEAT ➜</button>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <button class="next-btn" style="width: 100%; font-size: 0.98rem; padding: 13px;" onclick="startGame()">ENTER THE HOT SEAT ➜</button>
+        <button class="hud-pill" style="width: 100%; justify-content: center; padding: 9px; font-size: 0.8rem;" onclick="event.stopPropagation(); toggleFullScreen();">⛶ SWITCH TO FULLSCREEN</button>
+      </div>
     </div>
   </div>
 
@@ -1120,6 +1196,122 @@
   </div>
 
   <script>
+    /* =========================================================
+       DYNAMIC VIEWPORT & FULLSCREEN SUPPORT (PC + NEW & OLD IPADS)
+       ========================================================= */
+    function updateViewportHeight() {
+      document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+      resizeConfettiCanvas();
+    }
+
+    window.addEventListener('resize', updateViewportHeight);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(updateViewportHeight, 150);
+    });
+    updateViewportHeight();
+
+    function isNativeFullscreen() {
+      return !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        document.mozFullScreenElement ||
+        document.msFullscreenElement
+      );
+    }
+
+    function updateFullscreenButtonUI(isActive) {
+      const btn = document.getElementById("fullscreenBtn");
+      if (!btn) return;
+      if (isActive) {
+        btn.textContent = "🡼 Exit Full";
+        btn.classList.add("fs-active");
+      } else {
+        btn.textContent = "⛶ Fullscreen";
+        btn.classList.remove("fs-active");
+      }
+    }
+
+    function toggleFullScreen() {
+      const docEl = document.documentElement;
+
+      if (isNativeFullscreen()) {
+        // Exit native fullscreen
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        } else if (document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+          document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+          document.msExitFullscreen();
+        }
+        updateFullscreenButtonUI(false);
+        return;
+      }
+
+      // Attempt native Fullscreen API (works on PC, Android, iPadOS 16.4+)
+      const reqFs =
+        docEl.requestFullscreen ||
+        docEl.webkitRequestFullscreen ||
+        docEl.mozRequestFullScreen ||
+        docEl.msRequestFullscreen;
+
+      if (reqFs) {
+        try {
+          const promise = reqFs.call(docEl);
+          if (promise && typeof promise.then === "function") {
+            promise
+              .then(() => {
+                updateFullscreenButtonUI(true);
+                setTimeout(updateViewportHeight, 100);
+              })
+              .catch(() => {
+                activateLegacyIpadFitMode();
+              });
+          } else {
+            updateFullscreenButtonUI(true);
+            setTimeout(updateViewportHeight, 100);
+          }
+        } catch (err) {
+          activateLegacyIpadFitMode();
+        }
+      } else {
+        // Older iPad Safari fallback (does not expose requestFullscreen on elements)
+        activateLegacyIpadFitMode();
+      }
+    }
+
+    function activateLegacyIpadFitMode() {
+      const isCompact = document.body.classList.toggle("compact-fit");
+      window.scrollTo(0, 1);
+      updateViewportHeight();
+      updateFullscreenButtonUI(isCompact);
+
+      // Show Safari Add-to-Home-Screen instruction if not already running in standalone mode
+      const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+      if (isCompact && !isStandalone) {
+        document.getElementById("iosFsTip").classList.add("active");
+        setTimeout(updateViewportHeight, 50);
+      } else {
+        document.getElementById("iosFsTip").classList.remove("active");
+        setTimeout(updateViewportHeight, 50);
+      }
+    }
+
+    function dismissIosTip() {
+      document.getElementById("iosFsTip").classList.remove("active");
+      setTimeout(updateViewportHeight, 50);
+    }
+
+    document.addEventListener("fullscreenchange", () => {
+      updateFullscreenButtonUI(isNativeFullscreen());
+      setTimeout(updateViewportHeight, 100);
+    });
+    document.addEventListener("webkitfullscreenchange", () => {
+      updateFullscreenButtonUI(isNativeFullscreen());
+      setTimeout(updateViewportHeight, 100);
+    });
+
     /* =========================================================
        20 QUESTIONS DATA (15 MULTIPLE CHOICE + 5 FILL IN THE BLANKS)
        ========================================================= */
@@ -1345,12 +1537,10 @@
       initAudioCtx();
       if (isMuted) return;
 
-      // Pause background music while the lifeline sound plays
       try {
         mp3Tracks.bgm.pause();
       } catch (e) {}
 
-      // Stop any previously playing lifeline sound
       if (activeLifelineTrack) {
         try {
           activeLifelineTrack.onended = null;
@@ -1504,6 +1694,7 @@
     let confettiAnimId = null;
 
     function resizeConfettiCanvas() {
+      if (!confettiCanvas) return;
       confettiCanvas.width = window.innerWidth;
       confettiCanvas.height = window.innerHeight;
     }
@@ -1636,6 +1827,7 @@
     function startGame() {
       initAudioCtx();
       document.getElementById("startModal").classList.remove("active");
+      updateViewportHeight();
       buildMoneyLadder();
       loadQuestion();
     }
