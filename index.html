@@ -1127,7 +1127,7 @@
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 10px;">
-        <button class="next-btn" style="width: 100%; font-size: 0.98rem; padding: 13px;" onclick="startGame()">ENTER THE HOT SEAT ➜</button>
+        <button class="next-btn" style="width: 100%; font-size: 0.98rem; padding: 13px;" onclick="event.stopPropagation(); startGame();">ENTER THE HOT SEAT ➜</button>
         <button class="hud-pill" style="width: 100%; justify-content: center; padding: 9px; font-size: 0.8rem;" onclick="event.stopPropagation(); toggleFullScreen();">⛶ SWITCH TO FULLSCREEN</button>
       </div>
     </div>
@@ -1197,6 +1197,20 @@
 
   <script>
     /* =========================================================
+       CONFETTI CANVAS INIT (MUST BE DEFINED BEFORE VIEWPORT RESIZE)
+       ========================================================= */
+    const confettiCanvas = document.getElementById("confettiCanvas");
+    const cCtx = confettiCanvas.getContext("2d");
+    let confettiParticles = [];
+    let confettiAnimId = null;
+
+    function resizeConfettiCanvas() {
+      if (!confettiCanvas) return;
+      confettiCanvas.width = window.innerWidth;
+      confettiCanvas.height = window.innerHeight;
+    }
+
+    /* =========================================================
        DYNAMIC VIEWPORT & FULLSCREEN SUPPORT (PC + NEW & OLD IPADS)
        ========================================================= */
     function updateViewportHeight() {
@@ -1235,7 +1249,6 @@
       const docEl = document.documentElement;
 
       if (isNativeFullscreen()) {
-        // Exit native fullscreen
         if (document.exitFullscreen) {
           document.exitFullscreen().catch(() => {});
         } else if (document.webkitExitFullscreen) {
@@ -1249,7 +1262,6 @@
         return;
       }
 
-      // Attempt native Fullscreen API (works on PC, Android, iPadOS 16.4+)
       const reqFs =
         docEl.requestFullscreen ||
         docEl.webkitRequestFullscreen ||
@@ -1276,7 +1288,6 @@
           activateLegacyIpadFitMode();
         }
       } else {
-        // Older iPad Safari fallback (does not expose requestFullscreen on elements)
         activateLegacyIpadFitMode();
       }
     }
@@ -1287,7 +1298,6 @@
       updateViewportHeight();
       updateFullscreenButtonUI(isCompact);
 
-      // Show Safari Add-to-Home-Screen instruction if not already running in standalone mode
       const isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
       if (isCompact && !isStandalone) {
         document.getElementById("iosFsTip").classList.add("active");
@@ -1688,19 +1698,6 @@
     /* =========================================================
        MASSIVE CONFETTI CANNON ENGINE
        ========================================================= */
-    const confettiCanvas = document.getElementById("confettiCanvas");
-    const cCtx = confettiCanvas.getContext("2d");
-    let confettiParticles = [];
-    let confettiAnimId = null;
-
-    function resizeConfettiCanvas() {
-      if (!confettiCanvas) return;
-      confettiCanvas.width = window.innerWidth;
-      confettiCanvas.height = window.innerHeight;
-    }
-    window.addEventListener("resize", resizeConfettiCanvas);
-    resizeConfettiCanvas();
-
     function launchMassiveConfetti() {
       confettiParticles = [];
       const colors = [
